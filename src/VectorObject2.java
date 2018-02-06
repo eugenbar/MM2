@@ -18,6 +18,9 @@ public class VectorObject2{
     private Point prevMousePosition = new Point(0,0);
     private boolean dragging = false;
     private boolean isScaleable = false;
+    private Point shadingPoint = new Point(0,0);
+    private boolean shading = false;
+    private List<Point>[] shadingArray;
 
     public VectorObject2(Point p1,String objectType){
         points.add(p1);
@@ -42,9 +45,9 @@ public class VectorObject2{
         }
         setBorders();
     }
-    public void draw(Graphics2D g2d){
+    public void draw(Graphics2D g2d) {
         g2d.setColor(c1);
-        if(objectType=="Bezier" ||points.size()<2) {
+        if (objectType == "Bezier" || points.size() < 2) {
             /*for (int i = 0; i < points.size(); i++) {
                 if (i == points.size() - 1) {
                     g2d.drawLine(points.get(i).x, points.get(i).y,
@@ -55,35 +58,42 @@ public class VectorObject2{
                 }
 
             }*/
-            if(objectType=="Bezier"&&points.size()>2){
-                for(int i = 0;i<points.size()*500;i++) {
-                    besierCurvePixel(g2d, (float)i/(500*points.size()));
+            if (objectType == "Bezier" && points.size() > 2) {
+                for (int i = 0; i < points.size() * 500; i++) {
+                    besierCurvePixel(g2d, (float) i / (500 * points.size()));
                 }
             }
-        }else if(objectType=="Rect"){
-            drawLine(g2d,points.get(0),points.get(2));
-            drawLine(g2d,points.get(0),points.get(3));
-            drawLine(g2d,points.get(1),points.get(3));
-            drawLine(g2d,points.get(1),points.get(2));
-        }else if(objectType=="Line"){
+        } else if (objectType == "Rect") {
+            drawLine(g2d, points.get(0), points.get(2));
+            drawLine(g2d, points.get(0), points.get(3));
+            drawLine(g2d, points.get(1), points.get(3));
+            drawLine(g2d, points.get(1), points.get(2));
+        } else if (objectType == "Line") {
             //g2d.drawLine(points.get(0).x,points.get(0).y,
-              //      points.get(1).x,points.get(1).y);
-            drawLine(g2d,points.get(0),points.get(1));
-        }else if(objectType=="Circle"){
-            g2d.drawOval(points.get(0).x,points.get(0).y,
-                    Math.abs(points.get(0).x-points.get(1).x),
-                    Math.abs(points.get(0).y-points.get(1).y));
+            //      points.get(1).x,points.get(1).y);
+            drawLine(g2d, points.get(0), points.get(1));
+        } else if (objectType == "Circle") {
+            g2d.drawOval(points.get(0).x, points.get(0).y,
+                    Math.abs(points.get(0).x - points.get(1).x),
+                    Math.abs(points.get(0).y - points.get(1).y));
         }
-        if(isSelected){
-            drawSelection(g2d);
-            drawPoints(g2d);
-            if(checkMarked()){
-                drawMarked(g2d);
+            if (isSelected) {
+                drawSelection(g2d);
+                drawPoints(g2d);
+                if (checkMarked()) {
+                    drawMarked(g2d);
+                }
+                drawScaleable(g2d, getPrevMousePosition());
+                //drawShading(g2d);
             }
-            drawScaleable(g2d,getPrevMousePosition());
+            if(shading){
+                drawShading(g2d);
+            }
+            g2d.setColor(Color.BLACK);
+            g2d.fillOval(20,200,thickness,thickness);
+
         }
 
-    }
     private void drawLine(Graphics2D g2d,Point p1,Point p2){
         double m = (double) (p2.y-p1.y)/(double)(p2.x-p1.x);
         double mx = (double) (p2.x-p1.x)/(double)(p2.y-p1.y);
@@ -134,6 +144,9 @@ public class VectorObject2{
             }else {
                 g2d.fillOval(points.get(i).x, points.get(i).y, 10, 10);
             }
+        }if(!shadingPoint.equals(new Point(0,0))){
+            g2d.setColor(Color.cyan);
+            g2d.fillOval(shadingPoint.x,shadingPoint.y,10,10);
         }
     }
     private void drawSelection(Graphics2D g2d){
@@ -151,6 +164,43 @@ public class VectorObject2{
             g2d.fillRect(border1.x,border1.y,border2.x-border1.x,
                     border2.y-border1.y);
             g2d.setColor(c1);
+        }
+    }
+    public void setShading(boolean b){
+
+        if(b){
+            shadingPoint = new Point((border2.x-border1.x)/2,border2.y);
+            shadingArray = (ArrayList<Point>[])new ArrayList[100];
+            double a = 5;
+            double e = shadingPoint.y-border2.y;
+            double d = ((border2.x-border1.x)/2) - shadingPoint.x;
+            double x1 = d-(border2.x-border1.x)/2;
+            double x2 = d+(border2.x-border1.x)/2;
+            for(int i=0;i<100;i++){
+                double dx = x1+Math.random()*(x2-x1);
+                double dy = a*(dx-d)*(dx-d)+e;
+                //for(int j=0;j<points.size())
+                for(int j = 0;j<points.size();j++){
+                    shadingArray[i].add(new Point((int)(points.get(j).x+dx),(int)(points.get(j).y+dy)));
+                }
+
+                //g2d.setColor(new Color(c1.getRed(),c1.getGreen(),c1.getBlue(),1));
+            }
+            shading=b;
+            //points.add(shadingPoint);
+           // drawShading();
+        }else {
+            shadingPoint=new Point(0,0);
+        }
+    }
+    public boolean getShading(){
+        return shading;
+    }
+    public void setThickness(boolean inc){
+        if(inc){
+            thickness+=1;
+        }else {
+            thickness-=1;
         }
     }
     public void setBorders(){
@@ -254,6 +304,15 @@ public class VectorObject2{
         return fact;
     }
     //Bernstein polynomial
+    private void drawShading(Graphics2D g2d){
+        if(shading){
+            g2d.setColor(new Color(c1.getRed(),c1.getGreen(),c1.getBlue(),1));
+            for(int i=0;i<100;i++){
+                drawLine(g2d, shadingArray[i].get(0), shadingArray[i].get(1));
+
+            }
+        }
+    }
     private static double bernstein(float t, int n, int i){
 
         return (fact(n) / (fact(i) * fact(n-i))) * Math.pow(1-t, n-i) * Math.pow(t, i);

@@ -139,11 +139,13 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
        // jSP.addKeyListener(this);
         //this.add(this);
         //f.addKeyListener(this);
-        ff.add(jSP);
+       // ff.add(jSP);
        // f.add( jSP,BorderLayout.WEST );
         //f.add(this,BorderLayout.CENTER);
         ff.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         ff.setVisible(true);
+        colorChooser.setLayout(null);
+        ff.add(colorChooser);
 
         this.addKeyListener(this);
         //ff.addKeyListener(this);
@@ -152,22 +154,21 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
         this.setLayout(null);
-        colorChooser.setLayout(null);
-        this.add(colorChooser);
-        colorChooser.setBounds(100,100,30,30);
+
+        colorChooser.setBounds(10,100,30,30);
 
         //f.addKeyListener(this);
            // f.pack();
         //addWall();
-        bunny = new Object3D(this.width,this.height);
-        bunny.loadFile("src/bun_zipper_res3.ply");
+       // bunny = new Object3D(this.width,this.height);
+        //bunny.loadFile("src/bun_zipper_res3.ply");
         //bunny.loadFile("src/sphere.ply");
        // bunny.scale(0.6,0.6,0.6);
-        bunny.translate(0,0,1.7);
+        //bunny.translate(0,0,1.7);
         //bunny.movingX = 0.02;
         //bunny.movingY = -0.02;*/
-        bunny.rotatingY+=Math.PI/17;
-        bunny.rotate(0,0,Math.PI);
+       // bunny.rotatingY+=Math.PI/17;
+        //bunny.rotate(0,0,Math.PI);
         //bunny.rotatingZ+=Math.PI/17;
 
      //   ray = new Object3D(this.width,this.height);
@@ -176,7 +177,7 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
         //addObject();
         //object3DList.get(object3DList.size()-1).scale(2,2,2);
        // addObject();
-        object3DList.add(bunny);
+        //object3DList.add(bunny);
         //activeObject=2;
         /*bunny = new Object3D(this.width,this.height);
         bunny.loadFile("src/bun_zipper_res3.ply");
@@ -643,7 +644,7 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
 
     @Override
     public void keyPressed(KeyEvent e) {
-        System.out.println(e.getKeyChar()+e.getExtendedKeyCode());
+        System.out.println(e.getKeyChar()+" "+e.getExtendedKeyCode());
 
         if(e.getKeyChar()=='1'){
             drawSelection = "Line";
@@ -680,6 +681,26 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
                 selectionIndex = 0;
             }
             vOs.get(selectionIndex).isSelected=true;
+        }if(e.getKeyChar()=='y'){
+            for(int i=0;i<vOs.size();i++){
+                if(vOs.get(i).isSelected){
+                    vOs.get(i).setShading(true);
+                }
+            }
+        }
+        if(e.getKeyChar()=='e'){
+            for(int i=0;i<vOs.size();i++){
+                if(vOs.get(i).isSelected){
+                    vOs.get(i).setThickness(false);
+                }
+            }
+        }
+        if(e.getKeyChar()=='r'){
+            for(int i=0;i<vOs.size();i++){
+                if(vOs.get(i).isSelected){
+                    vOs.get(i).setThickness(true);
+                }
+            }
         }
 
         /*if(e.getKeyChar()=='r'){
