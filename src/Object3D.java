@@ -12,7 +12,7 @@ public class Object3D extends RenderEngine{
     protected List<Color> cL = new ArrayList<>();
     protected List<Color> cTL = new ArrayList<>();
     public Vertex lightSource;
-    public Color lightColor = new Color(255,255,255);
+    public Color lightColor = new Color(255,0,0);
     public double lightSourceScalar;
     public boolean wire = false;
     public boolean ray = false;

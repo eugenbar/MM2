@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.awt.event.KeyEvent.VK_TAB;
+
 public class World extends JFrame implements MouseListener,KeyListener,TreeSelectionListener,ActionListener,MouseMotionListener {
    // public JFrame f = new JFrame("World");
     public JFrame ff = new JFrame("TreeFrame");
@@ -59,6 +61,13 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
     public double [] dftKomplex;
     public double [] Ak;
     public boolean drawDFT = false;
+
+    public String drawSelection="Bezier";
+    public boolean drawing = false;
+    public List<VectorObject2> vOs = new ArrayList<>();
+    public int drawingIndex = 0;
+    public int selectionIndex = 0;
+    public ColorChooserButton colorChooser = new ColorChooserButton(Color.magenta);
 
     public World() throws IOException {
 
@@ -142,24 +151,32 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
         this.setVisible(true);
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
+        this.setLayout(null);
+        colorChooser.setLayout(null);
+        this.add(colorChooser);
+        colorChooser.setBounds(100,100,30,30);
+
         //f.addKeyListener(this);
            // f.pack();
         //addWall();
-      //bunny = new Object3D(this.width,this.height);
-        //bunny.loadFile("src/bun_zipper_res3.ply");
+        bunny = new Object3D(this.width,this.height);
+        bunny.loadFile("src/bun_zipper_res3.ply");
         //bunny.loadFile("src/sphere.ply");
-        //bunny.scale(0.6,0.6,0.6);
-        //bunny.translate(0,0,-10);
+       // bunny.scale(0.6,0.6,0.6);
+        bunny.translate(0,0,1.7);
         //bunny.movingX = 0.02;
         //bunny.movingY = -0.02;*/
+        bunny.rotatingY+=Math.PI/17;
+        bunny.rotate(0,0,Math.PI);
+        //bunny.rotatingZ+=Math.PI/17;
 
      //   ray = new Object3D(this.width,this.height);
 
 
-        addObject();
+        //addObject();
         //object3DList.get(object3DList.size()-1).scale(2,2,2);
        // addObject();
-        //object3DList.add(bunny);
+        object3DList.add(bunny);
         //activeObject=2;
         /*bunny = new Object3D(this.width,this.height);
         bunny.loadFile("src/bun_zipper_res3.ply");
@@ -190,7 +207,20 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
         }
         activeObject=object3DList.size()-1;
         gameRunning=true;
-
+        /*object3DList.get(activeObject).rotatingY+=Math.PI/17;
+        object3DList.get(activeObject).rotatingX+=Math.PI/17;
+        object3DList.get(activeObject).rotatingZ+=Math.PI/17;*/
+        colorChooser.addColorChangedListener(new ColorChooserButton.ColorChangedListener() {
+            @Override
+            public void colorChanged(Color newColor) {
+                // do something with newColor ...
+                for(int i=0;i<vOs.size();i++){
+                    if(vOs.get(i).isSelected){
+                        vOs.get(i).setColor(newColor);
+                    }
+                }
+            }
+        });
         gameLoop();
         //bitMap = new BufferedImage();
 
@@ -217,6 +247,13 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
         }*/
         //Blatt 5
         g2d.setColor(Color.BLACK);
+        g2d.drawString(drawSelection,10,50);
+        for(int i=0;i<vOs.size();i++){
+            vOs.get(i).draw(g2d);
+        }
+        //colorChooser.setLocation(150,200);
+        colorChooser.paint(g2d);
+        /*g2d.setColor(Color.BLACK);
         g2d.drawLine(0,height/2,width,height/2);
         g2d.drawLine(width/2,0,width/2,height);
         g2d.setColor(Color.RED);
@@ -235,7 +272,7 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
                 g2d.drawLine(i,(int)((dftReell[i])),i+1,
                         (int)((dftReell[i+1])));
             }
-        }
+        }*/
     }
     public void gameLoop()
     {
@@ -431,8 +468,8 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
                 image.setRGB(x,y,Color.GREEN.getRGB());
             }
         }*/
-
-       /* rootObject.draw(g2d);
+        //rootObject.draw(g2d);
+       /*
         for(Object3D obj:object3DList) {
             //g2d.rotate(a);
             obj.render(g2d,image);
@@ -447,7 +484,11 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
 
         }
         */
+       for(Object3D obj:object3DList){
+           obj.render(g2d,image);
+       }
        blatt4(g2d);
+
         //rayList.get(rayList.size()-1).render(g2d,image);
         bs.show();
         g2d.dispose();
@@ -475,6 +516,7 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
         //co.draw(g2d);
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                 RenderingHints.VALUE_ANTIALIAS_ON);
+
        // rootObject.draw(g2d);
         //g2d.translate((int)(this.getWidth()/2),(int)(this.getHeight()/2));
         //obj.drawObject(g2d);
@@ -504,6 +546,23 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
 
     @Override
     public void mouseClicked(MouseEvent e) {
+            if(!drawing) {
+                if(vOs.size()>0)vOs.get(vOs.size()-1).isSelected=false;
+                vOs.add(new VectorObject2(new Point(e.getX(),e.getY()),drawSelection));
+                drawing=true;
+                drawingIndex = vOs.size()-1;
+            }else{
+                if(vOs.get(drawingIndex).points.size()<2 || drawSelection=="Bezier") {
+                    vOs.get(drawingIndex).addPoint(new Point(e.getX(), e.getY()));
+                }
+                if(drawSelection!="Bezier"){
+                    drawing = false;
+                    for(int i=0;i<vOs.size()-1;i++){
+                        vOs.get(i).isSelected=false;
+                    }
+                }
+            }
+
         /*TreePath selectedPath = tree.getSelectionPath();
         selectedNode = (VectorObject) selectedPath.getLastPathComponent();
         if(currentVectorType.equals("Circle"))
@@ -528,7 +587,7 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
            // System.out.println(obj.lightSource.getX()+" "+obj.lightSource.getY()+" "+obj.lightSource.getZ());
         }
         addRay((double)e.getX()-width/2,(double)e.getY()-height/2);
-        /*for(int i=0;i<width;i++){
+      /*  for(int i=0;i<width;i++){
             for(int j = 0;j<height;j++){
                 addRay(i-width/2,j-height/2);
             }
@@ -561,6 +620,9 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
 
     @Override
     public void mouseReleased(MouseEvent e) {
+        for(int i=0;i<vOs.size();i++){
+            vOs.get(i).setPrevMousePosition(new Point(0,0));
+        }
 
     }
 
@@ -581,8 +643,46 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
 
     @Override
     public void keyPressed(KeyEvent e) {
-        System.out.println(e.getKeyChar());
-        if(e.getKeyChar()=='r'){
+        System.out.println(e.getKeyChar()+e.getExtendedKeyCode());
+
+        if(e.getKeyChar()=='1'){
+            drawSelection = "Line";
+        }
+        if(e.getKeyChar()=='2'){
+            drawSelection = "Circle";
+        }
+        if(e.getKeyChar()=='3'){
+            drawSelection = "Rect";
+        }
+        if(e.getKeyChar()=='4'){
+            drawSelection = "Bezier";
+        }
+        if(e.getKeyChar()==' '){
+            //drawSelection = "";
+            for(int i =0;i<vOs.size();i++){
+                vOs.get(i).isDrawing=false;
+                //vOs.get(i).isSelected=false;
+            }
+            drawing=false;
+        }if(e.getKeyChar()=='q'){
+            vOs.get(selectionIndex).isSelected=false;
+            if(selectionIndex>0){
+                selectionIndex-=1;
+            }else {
+                selectionIndex = vOs.size()-1;
+            }
+            vOs.get(selectionIndex).isSelected=true;
+        }if(e.getKeyChar()=='w'){
+            vOs.get(selectionIndex).isSelected=false;
+            if(selectionIndex<vOs.size()-1){
+                selectionIndex+=1;
+            }else {
+                selectionIndex = 0;
+            }
+            vOs.get(selectionIndex).isSelected=true;
+        }
+
+        /*if(e.getKeyChar()=='r'){
            // obj.rotate(0,Math.PI/17,0);
             object3DList.get(activeObject).rotatingY+=Math.PI/17;
         }else if(e.getKeyChar()=='t'){
@@ -627,7 +727,7 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
 
 
 
-                /*int n = width;
+                *//*int n = width;
                 for (int k = 0; k < n; k++) {  // For each output element
                     double sumreal = 0;
                     double sumimag = 0;
@@ -639,7 +739,7 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
                     dftReell[k] = sumreal;
                     dftKomplex[k] = sumimag;
                     drawDFT = true;
-            }*/
+            }*//*
         }else if(e.getKeyChar()=='x'){
             object3DList.get(activeObject).scale(0.9,0.9,0.9);
         }else if(e.getKeyChar()=='c'){
@@ -686,18 +786,18 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
             for(Object3D obj:object3DList){
                 obj.wire = false;
             }
-        }else if(e.getKeyChar()=='m'){
+        }*/else if(e.getKeyChar()=='m'){
             for(int i = 0;i<100;i++) {
                 addObject();
                 object3DList.get(object3DList.size() - 1).setNewPosition(0, 0, 10);
                 object3DList.get(object3DList.size() - 1).movingX = (Math.random() - 0.5) * 1;
                 object3DList.get(object3DList.size() - 1).movingY = (Math.random() - 0.5) * 1;
-                object3DList.get(object3DList.size() - 1).movingZ = (Math.random() - 0.5) * 1;
-                object3DList.get(object3DList.size() - 1).scale(Math.random()*2, Math.random()*2, Math.random()*2);
+                object3DList.get(object3DList.size() - 1).movingZ = (Math.random() - 1) * 0.1;
+                object3DList.get(object3DList.size() - 1).scale(Math.random(), Math.random(), Math.random());
                 object3DList.get(object3DList.size() - 1).rotatingY = Math.PI / (50 * Math.random());
                 object3DList.get(object3DList.size() - 1).rotatingZ = Math.PI / (50 * Math.random());
             }
-        }else if(e.getKeyChar()=='y'){
+        }/*else if(e.getKeyChar()=='y'){
             addObject();
         }else if(e.getKeyChar()=='<'){
             activeObject+=1;
@@ -759,7 +859,7 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
             g2d.drawString("Parts: "+symmetricParts,10,180);
             g2d.drawString("Rotation: "+rotation+"-zählig",10,200);
 
-        }
+        }*/
 
         //repaint();
 
@@ -820,6 +920,18 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
         /*Graphics2D g2d = (Graphics2D) bitMap.createGraphics();
         g2d.setColor(Color.RED);
         g2d.fillOval(e.getX(),e.getY(),3,3);*/
+        for(int i =0;i<vOs.size();i++){
+            if(vOs.get(i).isSelected && vOs.get(i).getSelectedPoint()>=0 ){
+                vOs.get(i).setPoint(vOs.get(i).getSelectedPoint(),
+                        new Point(e.getX(),e.getY()));
+            }else if(vOs.get(i).getScaleable()){
+                vOs.get(i).dragMove(new Point(e.getX(),e.getY()));
+            }
+            else if(vOs.get(i).checkMarked()){
+                vOs.get(i).dragMove(new Point(e.getX(),e.getY()));
+            }
+        }
+
         if(e.getY()<myFunction[e.getX()]){
             int d = (myFunction[e.getX()]-e.getY())/zugKraft;
             int mid = e.getX();
@@ -850,6 +962,51 @@ public class World extends JFrame implements MouseListener,KeyListener,TreeSelec
             obj.lightSource.setZ(-0.1);
             obj.setLightSourceScalar();
             obj.lightColor = Color.YELLOW;
+            boolean pointSelected = false;
+
+            for(int i =0;i<vOs.size();i++){
+                if(vOs.get(i).isSelected ){
+                    vOs.get(i).setSelectedPoint(-1);
+                    vOs.get(i).setScaleable(false);
+                    vOs.get(i).setPrevMousePosition(new Point(0,0));
+                    for(int j =0;j<vOs.get(i).points.size();j++){
+                        if(Math.abs(vOs.get(i).points.get(j).x-e.getX())<10 &&
+                                Math.abs(vOs.get(i).points.get(j).y-e.getY())<10){
+                            vOs.get(i).setSelectedPoint(j);
+                            pointSelected=true;
+                        }
+                    }
+                }
+            }
+            if(!pointSelected){
+                for(int i=0;i<vOs.size();i++){
+
+                    if(vOs.get(i).isSelected &&
+                            vOs.get(i).getBorder1().x<e.getX()&&
+                            vOs.get(i).getBorder1().y<e.getY()&&
+                            vOs.get(i).getBorder2().x>e.getX()&&
+                            vOs.get(i).getBorder2().y>e.getY()){
+                        vOs.get(i).setMarked(true);
+
+                    }else vOs.get(i).setMarked(false);
+                    if(vOs.get(i).isSelected &&(
+                            (vOs.get(i).getBorder1().x<e.getX() &&
+                            vOs.get(i).getBorder1().x+2*vOs.get(i).getThickness()>e.getX()) ||
+                                    (vOs.get(i).getBorder2().x>e.getX() &&
+                                            vOs.get(i).getBorder2().x-2*vOs.get(i).getThickness()<e.getX())||
+                                    (vOs.get(i).getBorder1().y<e.getY()&&
+                                            vOs.get(i).getBorder1().y+2*vOs.get(i).getThickness()>e.getY())||
+                                    (vOs.get(i).getBorder2().y>e.getY()&&
+                                    vOs.get(i).getBorder2().y-2*vOs.get(i).getThickness()<e.getY())
+
+                            )){
+                        vOs.get(i).setScaleable(true);
+                        vOs.get(i).setPrevMousePosition(new Point(e.getX(),e.getY()));
+
+                    }
+                }
+
+            }
             // System.out.println(obj.lightSource.getX()+" "+obj.lightSource.getY()+" "+obj.lightSource.getZ());
 
             /*Graphics2D g2d = (Graphics2D) bitMap.createGraphics();
